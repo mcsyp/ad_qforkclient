@@ -53,11 +53,8 @@ bool SerialLaser::checkValid(float current){
     return true;
   }
   float gap = fabs(last_dist-current);
-  if(gap>this->max_gap_ || gap<this->min_gap_){
-    return false;
-  }
-  last_dist = current;
-  return true;
+  last_dist =current;
+  return (gap<=this->max_gap_ && gap>=this->min_gap_);
 }
 
 float SerialLaser::parseResponseMessage(char *str_rx)

@@ -12,7 +12,7 @@ public:
 #define LASER_BAUDRATE QSerialPort::Baud19200
 #define LASER_ON "O"
 #define LASER_DETECT "D"
-  static constexpr float DEFAULT_MAX_DIST_THRESHOLD = 1.0f;//1m if next value gap bigger than this. invalid
+  static constexpr float DEFAULT_MAX_DIST_THRESHOLD = 1.50f;//1m if next value gap bigger than this. invalid
   static constexpr float DEFAULT_MIN_DIST_THRESHOLD = 0.0001f;
   explicit SerialLaser(QObject *parent = 0);
 

@@ -19,7 +19,10 @@ SOURCES += main.cpp \
     seriallaser.cpp \
     serialpix4flow.cpp \
     edison_i2c/i2c.c \
-    dmpthread.cpp
+    dmpthread.cpp \
+    dataframe.cpp \
+    featurestandarddeviation.cpp \
+    featuremse.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -167,4 +170,7 @@ HEADERS += \
     distanceestimater.h \
     seriallaser.h \
     serialpix4flow.h \
-    dmpthread.h
+    dmpthread.h \
+    dataframe.h \
+    featurestandarddeviation.h \
+    featuremse.h

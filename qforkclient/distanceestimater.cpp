@@ -2,15 +2,20 @@
 #include <qdebug.h>
 #include <qmath.h>
 
-
+using namespace qri_neuron_lib;
 DistanceEstimater::DistanceEstimater(QObject *parent) : QObject(parent)
 {
   connect(&laser_timer_,SIGNAL(timeout()),this,SLOT(onLaserTimeout()));
   connect(&laser_,SIGNAL(distanceChanged(int,float)),this,SLOT(onGroundDistanceChanged(int,float)));
   connect(&flow_,SIGNAL(flowChanged(int,float,float)),this,SLOT(onFlowChanged(int,float,float)));
 
-  this->ground_distance_ = 0.0f;
+  ptr_gyro_frame_ = NULL;
+  this->laser_distance_ = 0.0f;
   this->setLensFocal(LENS_FOCAL_LEN);
+}
+
+DistanceEstimater::~DistanceEstimater(){
+  if(ptr_gyro_frame_)delete ptr_gyro_frame_;
 }
 
 bool DistanceEstimater::begin(){
@@ -87,6 +92,31 @@ bool DistanceEstimater::begin(const ConfigParser::ConfigMap &configs)
               .arg(max_timegap);
   }while(0);
 
+  do{
+    gyro_frame_rows_ = GYRO_FRAME_ROWS;
+    if(configs.contains(CONFIG_KEY_GYRO_FRAME_SIZE)){
+      gyro_frame_rows_ = configs[CONFIG_KEY_GYRO_FRAME_SIZE].toInt();
+    }
+
+    gyro_mse_threshold_ = GYRO_MSE_THRESHOLD;
+    if(configs.contains(CONFIG_KEY_GYRO_MSE_THRESHOLD)){
+      gyro_mse_threshold_ = configs[CONFIG_KEY_GYRO_MSE_THRESHOLD].toFloat();
+    }
+
+    gyro_mse_check_ = 1;
+    if(configs.contains(CONFIG_KEY_GYRO_MSE_CHECK)){
+      gyro_mse_check_ = configs[CONFIG_KEY_GYRO_MSE_CHECK].toInt();
+    }
+
+    ptr_gyro_frame_ = new DataFrame(gyro_frame_rows_,GYRO_FRAME_COLS);
+    qDebug()<<tr("[%1,%2]gyro queue_size:%3,mse_threshold:%4,mse_check:%5")
+              .arg(__FILE__).arg(__LINE__)
+              .arg(gyro_frame_rows_)
+              .arg(gyro_mse_threshold_)
+              .arg(gyro_mse_check_);
+  }while(0);
+
+
   //step2.reset flow
   clearEstimater();
 
@@ -113,8 +143,7 @@ void DistanceEstimater::clearEstimater(){
   this->accumulated_dist_y_ = 0.0f;
 
   //reset ground distance
-  this->ground_distance_ = 0.0f;
-  this->ground_trgger_time_ = 0;
+  this->laser_distance_ = 0.0f;
 }
 
 void DistanceEstimater::setLensFocal(float lens)
@@ -128,56 +157,92 @@ void DistanceEstimater::setLensFocal(float lens)
 void DistanceEstimater::onLaserTimeout(){
   //step2.trigger time
   laser_.trigger();
-  ground_trgger_time_ = QTime::currentTime().msecsSinceStartOfDay();
 }
 
 void DistanceEstimater::onGroundDistanceChanged(int timestamp, float dist)
 {
   (void)timestamp;
-  ground_distance_ = dist;//update the ground distance
+  laser_distance_ = dist;//update the ground distance
   //printf("ground_distance:%.2f\n",ground_distance_);
 }
 
 void DistanceEstimater::onFlowChanged(int ts, float dx, float dy)
 {
-  if(dx==0 && dy==0)return;
+  if(dx==0 && dy==0){
+    //do not block, as long as it is not zero
+    return;
+  }
+  if(focal_length_pix_==0)return ;
+
 
   DMPThread::imu_record_t imu;
-  float ax=0.0f,ay=0.0f,az=0.0f;
-  float gx=0.0f,gy=0.0f,gz=0.0f;
+  //float accel[3]={0.0f,0.0f,0.0f};
+  float gyro[3]={0.0f,0.0f,0.0f};
   float yaw=0.0f,pitch=0.0f;
 
+  //step1. compute DMP accel and gyro
   if(!dmp_source_.syncRecord(ts,imu)){
     qDebug()<<tr("[%1,%2]fail to sync imu record.").arg(__FILE__).arg(__LINE__);
   }else{
     yaw = imu.ypr[0]*180/M_PI;
     pitch = imu.ypr[1];
-    gx = dmp_source_.convertGyro(imu.gx);
-    gy = dmp_source_.convertGyro(imu.gy);
-    gz = dmp_source_.convertGyro(imu.gz);
-    ax = dmp_source_.convertAccel(imu.ax);
-    ay = dmp_source_.convertAccel(imu.ay);
-    az = dmp_source_.convertAccel(imu.az);
+    gyro[0] = dmp_source_.convertGyro(imu.gx);
+    gyro[1] = dmp_source_.convertGyro(imu.gy);
+    gyro[2] = dmp_source_.convertGyro(imu.gz);
+    //accel[0] = dmp_source_.convertAccel(imu.ax);
+    //accel[1] = dmp_source_.convertAccel(imu.ay);
+    //accel[2] = dmp_source_.convertAccel(imu.az);
   }
 
-  float cosine = cos(pitch);
-  if(cosine<=0.0f){
-    return;//means the device is verticl
+  //step2.check gyro viberiation here
+  float gyro_mse=0.0f;
+  ptr_gyro_frame_->Push(gyro,GYRO_FRAME_COLS);
+  if(ptr_gyro_frame_->Full()){
+    gyro_mse = gyro_mse_.Process(ptr_gyro_frame_->Reference(),ptr_gyro_frame_->FrameSize());
+    ptr_gyro_frame_->Pop(1);
+  }
+  if(gyro_mse_check_ && gyro_mse<gyro_mse_threshold_){
+    return;
   }
 
-  if(ground_distance_){
-    float dist_y = ground_distance_*dy/this->focal_length_pix_;
-    dist_y = dist_y / cosine;
+  //step3.compute triangle
+  float alpha = fabs(pitch);
+  float beta=atan(dy/focal_length_pix_);
+  float sin_beta=sin(beta);
+  float gama = 0.0f;
+  if(dy>0){
+    gama = M_PI/2+alpha-beta;
+  }else{
+    gama = M_PI/2-alpha-beta;
+  }
+#if 0
+  printf("dy=%.2f,focal_lens:=%.2f,gama:%.2f,sin(gama):%.2f,beta:%.2f,sin(beta):%.2f\n",
+         dy,this->focal_length_pix_,
+         gama,sin(gama),
+         beta,sin_beta);
+#endif
+
+  //step4. compute real ground distance
+  if(laser_distance_){
+    float dist_y = 0.0f;
+    if(sin_beta){
+      dist_y = laser_distance_*sin_beta/sin(gama);
+    }else{
+      dist_y = laser_distance_;
+    }
+
     float vel_y = dist_y*1000.0f/flow_.msecBetweenFrames();//velocity in m/s
 
     int flag = (int)(vel_y*1000);
     if(flag){
       accumulated_dist_y_ += dist_y;
-      printf("imu accel:(%.2f,%.2f,%.2f),gyro:(%.2f,%.2f,%.2f),yaw:%.2f,pitch:%.2f ",
-             ax,ay,az,
-             gx,gy,gz,
-             yaw,pitch);
-      printf("ground_dist:%.2f,velocity:%.2fm/s, dist:%.2fm\n",ground_distance_,vel_y,accumulated_dist_y_);
+      printf("yaw:%.2f,dy:%.2f,laser_dist:%.2f,dist_y:%.2f,velocity:%.2fm/s, ground_dist:%.2fm\n",
+             yaw,
+             dy,
+             laser_distance_,
+             dist_y,
+             vel_y,
+             accumulated_dist_y_);
     }
   }
 
