@@ -28,7 +28,10 @@
 
 #define CONFIG_KEY_GYRO_FRAME_SIZE      "gyro_frame_size"
 #define CONFIG_KEY_GYRO_MSE_THRESHOLD   "gyro_mse_threshold"
-#define CONFIG_KEY_GYRO_MSE_CHECK        "gyro_mse_check"
+#define CONFIG_KEY_GYRO_MSE_CHECK       "gyro_mse_check"
+
+#define CONFIG_KEY_LASER_MIN_DIST       "laser_min_dist"
+#define CONFIG_KEY_LASER_MAX_DIST       "laser_max_dist"
 
 class DistanceEstimater : public QObject
 {

@@ -1,0 +1,17 @@
+PROJECT(flow_serial)
+cmake_minimum_required(VERSION 3.5)
+
+SET (SYS_INC /usr/include)
+SET (SYS_LIB /usr/lib /usr/lib32 /usr/lib/x86_64-linux-gnu/)
+
+#set include and libs
+INCLUDE_DIRECTORIES(${SYS_INC} . src mavlink_flow_v1.0)
+LINK_DIRECTORIES(${SYS_LIB} )
+
+#add_compile_options(-std=c++11)
+
+AUX_SOURCE_DIRECTORY( ./src SRC_LIST)
+
+ADD_EXECUTABLE(flow_serial ${SRC_LIST} )
+TARGET_LINK_LIBRARIES(flow_serial pthread)
+

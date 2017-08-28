@@ -17,3 +17,8 @@ dmp_max_timegap=30
 gyro_frame_size=10
 gyro_mse_threshold=0.5
 gyro_mse_check=1
+
+; laser settings
+laser_min_dist=0.002
+laser_max_dist=5.0
+

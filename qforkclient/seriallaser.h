@@ -12,8 +12,9 @@ public:
 #define LASER_BAUDRATE QSerialPort::Baud19200
 #define LASER_ON "O"
 #define LASER_DETECT "D"
-  static constexpr float DEFAULT_MAX_DIST_THRESHOLD = 1.50f;//1m if next value gap bigger than this. invalid
-  static constexpr float DEFAULT_MIN_DIST_THRESHOLD = 0.0001f;
+  static constexpr float DEFAULT_MAX_DIST_THRESHOLD=10.0f;//10m
+  static constexpr float DEFAULT_MIN_DIST_THRESHOLD=0.002f;//2mm
+
   explicit SerialLaser(QObject *parent = 0);
 
   /*purpose: begin this serial port to connect to PIX4FLOW
@@ -35,8 +36,8 @@ signals:
 public slots:
   void onReadyRead();
 protected:
-  float min_gap_;
-  float max_gap_;
+  float threshold_max_;
+  float threshold_min_;
 
 };
 

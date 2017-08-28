@@ -42,19 +42,12 @@ bool SerialLaser::begin(const QString port_path)
 }
 void SerialLaser::setThreshold(float min, float max){
   if(min>=max)return;
-  this->min_gap_ = min;
-  this->max_gap_ = max;
+  this->threshold_min_ = min;
+  this->threshold_max_ = max;
 }
 
 bool SerialLaser::checkValid(float current){
-  static float last_dist=0.0f;
-  if(last_dist==0.0f){
-    last_dist = current;
-    return true;
-  }
-  float gap = fabs(last_dist-current);
-  last_dist =current;
-  return (gap<=this->max_gap_ && gap>=this->min_gap_);
+  return (current>=this->threshold_min_ && current<=this->threshold_max_);
 }
 
 float SerialLaser::parseResponseMessage(char *str_rx)

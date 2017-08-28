@@ -92,7 +92,7 @@ bool DistanceEstimater::begin(const ConfigParser::ConfigMap &configs)
               .arg(max_timegap);
   }while(0);
 
-  do{
+  do{//load gyro viberation info
     gyro_frame_rows_ = GYRO_FRAME_ROWS;
     if(configs.contains(CONFIG_KEY_GYRO_FRAME_SIZE)){
       gyro_frame_rows_ = configs[CONFIG_KEY_GYRO_FRAME_SIZE].toInt();
@@ -116,6 +116,19 @@ bool DistanceEstimater::begin(const ConfigParser::ConfigMap &configs)
               .arg(gyro_mse_check_);
   }while(0);
 
+
+  do{//Load Laser distance information
+    if(configs.contains(CONFIG_KEY_LASER_MIN_DIST) &&
+       configs.contains(CONFIG_KEY_LASER_MAX_DIST)){
+      float min_dist = configs[CONFIG_KEY_LASER_MIN_DIST].toFloat();
+      float max_dist = configs[CONFIG_KEY_LASER_MAX_DIST].toFloat();
+      laser_.setThreshold(min_dist,max_dist);
+      qDebug()<<tr("[%1,%2]laser distance threshold[%3,%4]")
+                .arg(__FILE__).arg(__LINE__)
+                .arg(min_dist)
+                .arg(max_dist);
+    }
+  }while(0);
 
   //step2.reset flow
   clearEstimater();
