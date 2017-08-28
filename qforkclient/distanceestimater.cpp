@@ -228,7 +228,7 @@ void DistanceEstimater::onFlowChanged(int ts, float dx, float dy)
     if(sin_beta){
       dist_y = laser_distance_*sin_beta/sin(gama);
     }else{
-      dist_y = laser_distance_;
+      dist_y = 0.0f;
     }
 
     float vel_y = dist_y*1000.0f/flow_.msecBetweenFrames();//velocity in m/s
