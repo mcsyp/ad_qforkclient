@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = qforkclient
+TARGET = qtrackclient
 CONFIG += console
 CONFIG -= app_bundle
 
