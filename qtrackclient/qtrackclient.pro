@@ -1,4 +1,4 @@
-QT += core serialport
+QT += core serialport network
 QT -= gui
 
 CONFIG += c++11
@@ -22,7 +22,9 @@ SOURCES += main.cpp \
     dmpthread.cpp \
     dataframe.cpp \
     featurestandarddeviation.cpp \
-    featuremse.cpp
+    featuremse.cpp \
+    serverprotocol.cpp \
+    trajectoryclient.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -173,4 +175,6 @@ HEADERS += \
     dmpthread.h \
     dataframe.h \
     featurestandarddeviation.h \
-    featuremse.h
+    featuremse.h \
+    serverprotocol.h \
+    trajectoryclient.h

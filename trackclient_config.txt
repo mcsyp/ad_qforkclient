@@ -1,0 +1,33 @@
+; dev basic settings
+dev_serial_laser = ttyS2
+dev_serial_flow = ttyS1
+
+; lens basic parameter
+lens_focal_len = 16.0
+
+; timer settings in (ms)
+laser_update_timeout = 5000
+
+; dmp settings
+dmp_update_timeout=5
+dmp_record_size=200
+dmp_max_timegap=30
+
+; gyro settings
+gyro_frame_size=10
+gyro_mse_threshold_x=0.5
+gyro_mse_threshold_y=0.5
+gyro_mse_check=1
+
+flow_threshold_x=0.8
+flow_threshold_y=0.5
+
+; laser settings
+laser_min_dist=0.002
+laser_max_dist=5.0
+
+; server settings
+server_address=192.168.8.95
+server_port=7000
+server_reconnect = 5000
+

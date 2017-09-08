@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>Ground.qml</file>
+        <file>Fork.qml</file>
+        <file>images/cross.png</file>
+        <file>images/spider_2.png</file>
+        <file>World.qml</file>
+        <file>images/angle.png</file>
+    </qresource>
+</RCC>
