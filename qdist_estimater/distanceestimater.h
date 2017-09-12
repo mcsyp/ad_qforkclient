@@ -30,7 +30,7 @@
 #define CONFIG_KEY_GYRO_FRAME_SIZE      "gyro_frame_size"
 #define CONFIG_KEY_GYRO_MSE_THRESHOLD_X   "gyro_mse_threshold_x"
 #define CONFIG_KEY_GYRO_MSE_THRESHOLD_Y   "gyro_mse_threshold_y"
-#define CONFIG_KEY_GYRO_MSE_CHECK       "gyro_mse_check"
+#define CONFIG_KEY_GYRO_MSE_TIMETOUT     "gyro_mse_timeout"
 
 #define CONFIG_KEY_LASER_MIN_DIST       "laser_min_dist"
 #define CONFIG_KEY_LASER_MAX_DIST       "laser_max_dist"
@@ -42,12 +42,15 @@ class DistanceEstimater : public QObject
 {
   Q_OBJECT
 public:
-  static constexpr float LENS_FOCAL_LEN = 4.0f;//in mm
+  static constexpr float LENS_FOCAL_LEN = 16.0f;//in mm
   static constexpr float SIZE_PER_PIXEL = 24.0f;//24 micro meter/pixel
   static constexpr uint64_t LASER_UPDATE_TIMEOUT=15000;//in miliseconds
   static constexpr int GYRO_FRAME_ROWS=10;
   static constexpr int GYRO_FRAME_COLS=2;
+
   static constexpr float GYRO_MSE_THRESHOLD=0.5;
+  static constexpr int   GYRO_MSE_TIMEOUT=2000;//2sec
+
   static constexpr float FLOW_MIN_THRESHOLD_X=0.5f;
   static constexpr float FLOW_MIN_THRESHOLD_Y=0.5f;
   static constexpr int   DMP_INITIALIZE_TIMEOUT=10000;//10sec
@@ -78,7 +81,6 @@ public:
 
   float Velocity()const {return velocity_;}
 
-  void  Distance(float* x,float *y);
   void  DistanceDelta(float *x, float *y);
 
   float Distance()const {return distance_;}
@@ -109,8 +111,6 @@ protected:
 
   float delta_x_;
   float delta_y_;
-  float dist_x_;
-  float dist_y_;
   float distance_;
   float distance_abs_;
   float velocity_;
@@ -123,7 +123,10 @@ protected:
   int gyro_frame_rows_;
   float gyro_mse_threshold_x_;
   float gyro_mse_threshold_y_;
-  bool gyro_mse_check_;
+  bool gyro_check_pass_;
+
+  int gyro_mse_pass_ts_;
+  int gyro_mse_timeout_;
 
   float flow_min_threshold_x_;
   float flow_min_threshold_y_;
