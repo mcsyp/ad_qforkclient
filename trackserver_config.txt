@@ -1,5 +1,5 @@
 ; server settings
-server_port = 7000
+server_port = 9000
 
 ; meter to pixel scale
 scale_meter_to_pixel=10

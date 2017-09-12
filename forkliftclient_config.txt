@@ -1,7 +1,7 @@
 ; dev basic settings
 dev_serial_laser = ttyS2
 dev_serial_flow = ttyS1
-dev_serial_slave = ttyUSB0
+dev_serial_ble = ttyUSB0
 
 ; lens basic parameter
 lens_focal_len = 16.0
@@ -28,13 +28,19 @@ laser_min_dist=0.002
 laser_max_dist=5.0
 
 ; server settings
-server_address=192.168.8.95
+server_address=192.168.1.102
 server_port=7000
 server_reconnect = 5000
+server_upload_timeout=60000
+server_hb_timeout=45000
 
 ; record settings
 record_temp=./record_temp.csv
 record_upload=./record_temp.csv
+record_timeout=1000
 
 ; slave ble mac
-slave_ble=“985dad21f24d”
+slave_ble=985dad21f24d
+
+; device info
+devid = JDX-3-01

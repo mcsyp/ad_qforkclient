@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = qtrackclient
+TARGET = qforklift_client
 CONFIG += console
 CONFIG -= app_bundle
 
@@ -11,6 +11,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     serverprotocol.cpp \
+    forkliftclient.cpp \
+    myhdlc.cpp \
     ../qdist_estimater/ArduinoWrapper.cpp \
     ../qdist_estimater/configparser.cpp \
     ../qdist_estimater/dataframe.cpp \
@@ -23,7 +25,8 @@ SOURCES += main.cpp \
     ../qdist_estimater/edison_i2c/i2c.c \
     ../qdist_estimater/MPU6050/MPU6050.cpp \
     ../qdist_estimater/I2Cdev/I2Cdev.cpp \
-    trajectoryclient.cpp
+    serialble.cpp \
+    uploadthread.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -41,6 +44,10 @@ INCLUDEPATH += ../qdist_estimater/MPU6050
 INCLUDEPATH += ../qdist_estimater
 
 HEADERS += \
+    serverprotocol.h \
+    forkliftclient.h \
+    myhdlc.h \
+    servercmdid.h \
     ../qdist_estimater/ArduinoWrapper.h \
     ../qdist_estimater/configparser.h \
     ../qdist_estimater/dataframe.h \
@@ -175,5 +182,5 @@ HEADERS += \
     ../qdist_estimater/mavlink_flow_v1.0/mavlink_types.h \
     ../qdist_estimater/mavlink_flow_v1.0/protocol.h \
     ../qdist_estimater/I2Cdev/I2Cdev.h \
-    serverprotocol.h \
-    trajectoryclient.h
+    serialble.h \
+    uploadthread.h

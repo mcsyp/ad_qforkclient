@@ -1,6 +1,6 @@
 #include "trajectoryclient.h"
 #include <qdebug.h>
-ForkClient::ForkClient(QObject *parent) : QTcpSocket(parent)
+TrajectoryClient::TrajectoryClient(QObject *parent) : QTcpSocket(parent)
 {
   connect(this,SIGNAL(connected()),this,SLOT(onConnected()));
   connect(this,SIGNAL(disconnected()),this,SLOT(onDisconnected()));
@@ -9,7 +9,7 @@ ForkClient::ForkClient(QObject *parent) : QTcpSocket(parent)
   connect(&reconnect_timer_,SIGNAL(timeout()),this,SLOT(onReconnectTimeout()));
 }
 
-bool ForkClient::Begin(ConfigParser::ConfigMap &configs){
+bool TrajectoryClient::Begin(ConfigParser::ConfigMap &configs){
   do{
     server_address_ = "";
     server_port_=0;
@@ -41,7 +41,6 @@ bool ForkClient::Begin(ConfigParser::ConfigMap &configs){
     qDebug()<<tr("[%1,%2]Fail to begin the esimator").arg(__FILE__).arg(__LINE__);
     return false;
   }
-
   //start server reconnection timer
   reconnect_timer_.start(server_retry_);
 
@@ -49,7 +48,7 @@ bool ForkClient::Begin(ConfigParser::ConfigMap &configs){
 
   return true;
 }
-void ForkClient::onReconnectTimeout(){
+void TrajectoryClient::onReconnectTimeout(){
   qDebug()<<tr("[%1,%2]connecting to server:%3:%4 at interval %5 ms")
             .arg(__FILE__).arg(__LINE__)
             .arg(server_address_)
@@ -59,7 +58,7 @@ void ForkClient::onReconnectTimeout(){
   connectToHost(server_address_,server_port_);
 }
 
-void ForkClient::onTrajectoryUpdated()
+void TrajectoryClient::onTrajectoryUpdated()
 {
   uint8_t head[32];
 
@@ -82,19 +81,19 @@ void ForkClient::onTrajectoryUpdated()
   write((char*)(&p),sizeof(p));
 }
 
-void ForkClient::onConnected()
+void TrajectoryClient::onConnected()
 {
   qDebug()<<tr("[%1,%2]server connected").arg(__FILE__).arg(__LINE__);
   reconnect_timer_.stop();
 }
 
-void ForkClient::onDisconnected()
+void TrajectoryClient::onDisconnected()
 {
   qDebug()<<tr("[%1,%2]server disconnected").arg(__FILE__).arg(__LINE__);
   reconnect_timer_.start(server_retry_);
 }
 
-void ForkClient::onReadyRead()
+void TrajectoryClient::onReadyRead()
 {
   QByteArray data = readAll();
   qDebug()<<tr("[%1,%2]rx message:%3").arg(__FILE__).arg(__LINE__).arg(QString(data));

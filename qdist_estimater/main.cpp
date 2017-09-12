@@ -4,7 +4,6 @@
 #include <QStringList>
 
 #include "distanceestimater.h"
-#include "trajectoryclient.h"
 #include "configparser.h"
 
 int main(int argc, char *argv[])
@@ -41,11 +40,12 @@ int main(int argc, char *argv[])
     qDebug()<<"Current config root directory:"<<work_dir;
 
     //step4. load devices
-    TrajectoryClient socket_client_;
-    if(!socket_client_.Begin(configs)){
+    DistanceEstimater dist;
+    if(!dist.Begin(configs)){
       qDebug()<<"Fail to begin the esitmater";
       return 0;
     }
     qDebug()<<"Running the estimater...";
+
     return a.exec();
 }

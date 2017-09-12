@@ -13,7 +13,7 @@
 #define CONFIG_KEY_SERVER_ADDRESS       "server_address"
 #define CONFIG_KEY_SERVER_PORT          "server_port"
 #define CONFIG_KEY_SERVER_RECONNECT_INTERVAL    "server_reconnect"
-class ForkClient : public QTcpSocket
+class TrajectoryClient : public QTcpSocket
 {
   Q_OBJECT
 public:
@@ -41,7 +41,7 @@ public:
   }trajectory_point_t;
 #pragma pack()
 
-  explicit ForkClient(QObject *parent = nullptr);
+  explicit TrajectoryClient(QObject *parent = nullptr);
 
   bool Begin(ConfigParser::ConfigMap & configs);
 public slots:

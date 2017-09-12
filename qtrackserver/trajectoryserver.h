@@ -14,7 +14,7 @@
 class TrajectoryServer : public QTcpServer{
   Q_OBJECT
 public:
-  static constexpr int DEFAULT_SERVER_PORT=6000;
+  static constexpr int DEFAULT_SERVER_PORT=9000;
   static constexpr int DEFAULT_SCALE_METER=150;
 
   //for server protocol communication:
