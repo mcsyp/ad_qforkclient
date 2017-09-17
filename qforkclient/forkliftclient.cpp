@@ -180,6 +180,7 @@ void ForkliftClient::onTaskTimeout()
 void ForkliftClient::onSlaveBleReady()
 {
   ble_info_ = slave_ble_.SlaveInfo();
+  client_socket_.volt_slave_ = ble_info_.volt/1000.0f;
   qDebug()<<tr("[%1,%2]ir_dist:%3, laser_dist:%4, volt:%5")
             .arg(__FILE__).arg(__LINE__)
             .arg(ble_info_.ir_dist)

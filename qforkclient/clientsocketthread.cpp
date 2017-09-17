@@ -13,6 +13,11 @@ ClientSocketThread::ClientSocketThread(QObject *parent) : QTcpSocket(parent)
    connect(&protocol_,SIGNAL(payloadReady(int,QByteArray)),this,SLOT(onPayloadReady(int,QByteArray)));
 
    moveToThread(&event_thread_);
+
+   this->server_time_ = 0;
+   this->local_time_offset_ = 0;
+   this->volt_master_ = 0.0f;
+   this->volt_slave_ = 0.0f;
 }
 
 bool ClientSocketThread::Begin(ConfigParser::ConfigMap &configs)
@@ -117,11 +122,29 @@ void ClientSocketThread::onReconnectTimeout()
   int ts = QTime::currentTime().msecsSinceStartOfDay();
   if(ts-hb_ts_>hb_timeout_){
     hb_ts_ = ts;
-    //TODO:fire the hb data
-    uint8_t head[32];
-    int message_size = ServerProtocol::FillHead(SERVER_HB_REQ,0,head,32);
-    write((char*)head,message_size);
-    //qDebug()<<tr("[%1,%2]HB updated").arg(__FILE__).arg(__LINE__);
+
+    const int head_size = 32;
+    uint8_t head[head_size];
+    //step1.update hb
+    do{
+      int head_len = ServerProtocol::FillHead(SERVER_HB_REQ,0,head,head_size);
+      write((char*)head,head_len);
+      //qDebug()<<tr("[%1,%2]HB updated").arg(__FILE__).arg(__LINE__);
+    }while(0);
+
+    //step2.update master volt
+    if(volt_master_){
+      int head_len = ServerProtocol::FillHead(SERVER_MASTER_BATTERY_REQ,sizeof(this->volt_master_),head,head_size);
+      write((char*)head,head_len);
+      write((char*)(&volt_master_),sizeof(volt_master_));
+    }
+
+    //step3.update slave volt
+    if(volt_slave_){
+      int head_len = ServerProtocol::FillHead(SERVER_SLAVE_BATTERY_REQ,sizeof(this->volt_slave_),head,head_size);
+      write((char*)head,head_len);
+      write((char*)(&volt_slave_),sizeof(volt_slave_));
+    }
   }
 }
 

@@ -48,6 +48,8 @@ protected:
 public:
   int server_time_;
   int local_time_offset_;
+  float volt_master_;
+  float volt_slave_;
 
 };
 
