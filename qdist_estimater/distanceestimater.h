@@ -45,6 +45,8 @@ public:
   static constexpr float LENS_FOCAL_LEN = 16.0f;//in mm
   static constexpr float SIZE_PER_PIXEL = 24.0f;//24 micro meter/pixel
   static constexpr uint64_t LASER_UPDATE_TIMEOUT=15000;//in miliseconds
+  static constexpr int LASER_UPDATE_OFFET=200;
+
   static constexpr int GYRO_FRAME_ROWS=10;
   static constexpr int GYRO_FRAME_COLS=2;
 
@@ -96,16 +98,18 @@ signals:
 public slots:
   void onGroundDistanceChanged(int ts,float dist);//update the ground distance in meter
   void onFlowChanged(int ts,float dx,float dy);
-  void onLaserTimeout();
+  void onDmpRecordUpdated(int ts);
 
 protected:
   SerialLaser laser_;
   SerialPix4Flow flow_;
   DMPThread dmp_source_;
-  QTimer laser_timer_;
-  uint64_t laser_update_timeout_ ;
 
+  //laser related
+  int laser_update_timeout_;
+  int laser_update_ts_;
   float laser_distance_;
+
   float lens_focal_len_;
   float focal_length_pix_; 
 
@@ -118,8 +122,6 @@ protected:
 
   int   update_timestamp_;
 
-  qri_neuron_lib::DataFrame *ptr_gyro_frame_;
-  qri_neuron_lib::FeatureMSE gyro_mse_;
   int gyro_frame_rows_;
   float gyro_mse_threshold_x_;
   float gyro_mse_threshold_y_;

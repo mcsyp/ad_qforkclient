@@ -5,8 +5,12 @@
 #include "edison_i2c.h"
 #include "I2Cdev.h"
 #include "MPU6050_9Axis_MotionApps41.h"
+
+using namespace qri_neuron_lib;
 DMPThread::DMPThread(QObject * parent): QThread(parent)
 {
+  ptr_dataframe_ = new DataFrame(GYRO_MSE_SIZE,GYRO_MSE_COLS);
+  ptr_dataframe_->Clear();
 }
 
 void DMPThread::StartDmpThread(int t,int max_size,int timegap)
@@ -15,6 +19,7 @@ void DMPThread::StartDmpThread(int t,int max_size,int timegap)
   record_size_ = max_size;
   record_max_timegap_ = timegap;
   record_list_.clear();
+  ptr_dataframe_->Clear();
   start();
 }
 
@@ -54,6 +59,7 @@ void DMPThread::run(){
   uint16_t fifoCount;
   uint8_t mpuIntStatus;
   uint8_t fifoBuffer[256];
+  float gyros[3];
 
   // orientation/motion vars
   Quaternion q;           // [w, x, y, z]         quaternion container
@@ -62,9 +68,6 @@ void DMPThread::run(){
   //set the arduino
   init_arduino();
   Wire.begin();
-  printf("Wire initialized.\n");
-  //set the mpu
-  printf("Initializing I2C devices...\n");
 
   mpu.initialize();
   printf(mpu.testConnection() ? ("MPU6050 connection successful") : ("MPU6050 connection failed"));
@@ -122,7 +125,8 @@ void DMPThread::run(){
           // display Euler angles in degrees
 
           imu_record_t imu_record;
-          imu_record.ts = QTime::currentTime().msecsSinceStartOfDay();
+          int ts = QTime::currentTime().msecsSinceStartOfDay();
+          imu_record.ts = ts;
 
           mpu.dmpGetQuaternion(&q, fifoBuffer);
           mpu.dmpGetGravity(&gravity, &q);
@@ -130,8 +134,21 @@ void DMPThread::run(){
           mpu.getMotion6(&(imu_record.ax),&(imu_record.ay),&(imu_record.az),
                          &(imu_record.gx),&(imu_record.gy),&(imu_record.gz));
 
+          //get gyro mse
+          gyros[0] = ConvertGyro(imu_record.gx);
+          gyros[1] = ConvertGyro(imu_record.gy);
+          gyros[2] = ConvertGyro(imu_record.gz);
+          ptr_dataframe_->Push(gyros,GYRO_MSE_COLS);
+          if(ptr_dataframe_->Full()){
+            for(int i=0;i<GYRO_MSE_COLS;++i){
+              imu_record.gyro_mse[i] = mse_.Process(ptr_dataframe_->ReadColumnData(i),ptr_dataframe_->RowLength());
+            }
+            ptr_dataframe_->Pop(GYRO_MSE_DELTA);
+          }
+
           record_mutex_.tryLock(RECORD_UPDATE_LOCK_TIMEOUT);
           if(record_list_.size()>=record_size_){
+            emit dmpUpdated(ts);
             record_list_.clear();
           }
           record_list_.append(imu_record);

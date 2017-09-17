@@ -5,10 +5,26 @@
 #include <QVector>
 #include <QMutex>
 #include "helper_3dmath.h"
+#include "dataframe.h"
+#include "featuremse.h"
 class DMPThread: public QThread
 {
   Q_OBJECT
 public:
+
+
+
+  static constexpr int DEFAULT_UPDATE_TIMEOUT =5;
+  static constexpr int DEFAULT_RECORD_SIZE=500;
+  static constexpr int DEFAULT_MAX_TIMEGAP=50;
+
+  static constexpr int RECORD_UPDATE_LOCK_TIMEOUT=200;//100ms
+  static constexpr int MSEC_ONE_DAY=86400000;
+  static constexpr float MAX_RANGE = 32767.0f;
+  static constexpr int GYRO_MSE_SIZE=10;
+  static constexpr int GYRO_MSE_COLS=3;
+  static constexpr int GYRO_MSE_DELTA=2;
+
   typedef struct imu_record_s{
     int ts;//timestamp
     float ypr[3];//yaw, pitch, roll
@@ -18,17 +34,9 @@ public:
     int16_t gx;
     int16_t gy;
     int16_t gz;
+    float gyro_mse[GYRO_MSE_COLS];
   }imu_record_t;
   typedef QVector<imu_record_t> ImuRecordList;
-
-  static constexpr int DEFAULT_UPDATE_TIMEOUT =5;
-  static constexpr int DEFAULT_RECORD_SIZE=500;
-  static constexpr int DEFAULT_MAX_TIMEGAP=50;
-
-  static constexpr int RECORD_UPDATE_LOCK_TIMEOUT=200;//100ms
-  static constexpr int MSEC_ONE_DAY=86400000;
-  static constexpr float MAX_RANGE = 32767.0f;
-
 
   explicit DMPThread(QObject * parent=NULL);
 
@@ -38,6 +46,8 @@ public:
 
   float ConvertAccel(int16_t a);
   float ConvertGyro(int16_t g);
+signals:
+  void dmpUpdated(int ts);
 protected:
   void run();
 
@@ -49,6 +59,9 @@ protected:
 
   float accel_range_;
   float gyro_range_;
+
+  qri_neuron_lib::FeatureMSE mse_;
+  qri_neuron_lib::DataFrame * ptr_dataframe_;
 public:
   ImuRecordList record_list_;
 };

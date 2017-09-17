@@ -4,7 +4,7 @@ dev_serial_flow = ttyS1
 dev_serial_ble = ttyUSB0
 
 ; lens basic parameter
-lens_focal_len = 16.0
+lens_focal_len = 16
 
 ; timer settings in (ms)
 laser_update_timeout = 5000
@@ -16,31 +16,31 @@ dmp_max_timegap=30
 
 ; gyro settings
 gyro_frame_size=10
-gyro_mse_threshold_x=0.5
-gyro_mse_threshold_y=0.5
-gyro_mse_check=1
+gyro_mse_threshold_x=1.0
+gyro_mse_threshold_y=1.0
+gyro_mse_timeout = 1000
 
 flow_threshold_x=0.8
-flow_threshold_y=0.5
+flow_threshold_y=0.6
 
 ; laser settings
 laser_min_dist=0.002
 laser_max_dist=5.0
 
 ; server settings
-server_address=192.168.1.102
-server_port=7000
-server_reconnect = 5000
+server_address=113.209.111.158
+server_port=6061
+server_reconnect_timeout = 5000
 server_upload_timeout=60000
 server_hb_timeout=45000
 
 ; record settings
 record_temp=./record_temp.csv
-record_upload=./record_temp.csv
+record_upload=./record_upload.csv
 record_timeout=1000
 
 ; slave ble mac
-slave_ble=985dad21f24d
+slave_ble=3ca3080754f5
 
 ; device info
-devid = JDX-3-01
+devid = JDX301
