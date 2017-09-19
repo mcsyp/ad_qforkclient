@@ -23,6 +23,8 @@ gyro_mse_timeout = 1000
 flow_threshold_x=0.8
 flow_threshold_y=0.6
 
+move_state_threshold = 0.02
+
 ; laser settings
 laser_min_dist=0.002
 laser_max_dist=5.0

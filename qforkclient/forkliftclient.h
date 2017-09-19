@@ -22,7 +22,8 @@
 #define CONFIG_KEY_RECORD_TIMEOUT            "record_timeout"
 
 #define CONFIG_KEY_SLAVE_BLE                 "slave_ble"
-#define CONFGI_KEY_BLE_SERIAL                "dev_serial_ble"
+#define CONFIG_KEY_BLE_SERIAL                "dev_serial_ble"
+#define CONFIG_KEY_MOVE_STATE_THRESHOLD      "move_state_threshold"
 
 class ForkliftClient : public QObject
 {
@@ -33,6 +34,7 @@ public:
   static constexpr int RECORD_TIMEOUT=1000;//
   static constexpr int TASK_TIMEOUT=1000;//
   static constexpr int TASK_TRIGGER=200;//200ms
+  static constexpr float MOVE_STATE_THRESHOLD=0.01;//1cm
 
   explicit ForkliftClient(QObject *parent = nullptr);
   ~ForkliftClient();
@@ -81,6 +83,8 @@ private:
 
   int task_upload_timeout_;//time to upload the data
   int task_upload_ts_;
+
+  float move_state_threshold_;
 };
 
 #endif // FORKCLIENT_H

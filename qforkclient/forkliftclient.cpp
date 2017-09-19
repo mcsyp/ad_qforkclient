@@ -34,7 +34,7 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
     if(configs.contains(CONFIG_KEY_SLAVE_BLE)){
       this->slave_mac_ = configs[CONFIG_KEY_SLAVE_BLE];
     }
-    QString portname = configs[CONFGI_KEY_BLE_SERIAL];
+    QString portname = configs[CONFIG_KEY_BLE_SERIAL];
     if(!slave_ble_.Begin(portname)){
       qDebug()<<tr("[%1,%2]fail to open ble port:%3").arg(__FILE__).arg(__LINE__).arg(portname);
       return false;
@@ -43,6 +43,14 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
     memset((char*)&ble_info_,0,sizeof(ble_info_));
     qDebug()<<tr("[%1,%2]connecting to ble:%3").arg(__FILE__).arg(__LINE__).arg(slave_mac_);
   }while(0);
+
+  //load move state threshold value
+  this->move_state_threshold_ = MOVE_STATE_THRESHOLD;
+  if(configs.contains(CONFIG_KEY_MOVE_STATE_THRESHOLD)){
+    this->move_state_threshold_ = configs[CONFIG_KEY_MOVE_STATE_THRESHOLD].toFloat();
+  }
+  qDebug()<<tr("[%1,%2]move state threshold:%3m").arg(__FILE__).arg(__LINE__).arg(this->move_state_threshold_);
+
 
   do{//local settings
     this->task_upload_timeout_ = SERVER_UPLOAD_TIMEOUT;
@@ -118,6 +126,7 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
 
 void ForkliftClient::onTaskTimeout()
 {
+  static float last_distance=0.0f;
   int ts = QTime::currentTime().msecsSinceStartOfDay();
 
   //update record
@@ -126,10 +135,13 @@ void ForkliftClient::onTaskTimeout()
     //TODO:record file
     int local_time = QTime::currentTime().msecsSinceStartOfDay()/1000;
     int ts = server_time_ +(local_time-local_time_offset_);
+
     int moving_flag = 0;
-    if(dist_estimater_.Velocity()){
+    if(fabs(dist_estimater_.Distance()-last_distance)>=this->move_state_threshold_){
       moving_flag=1;
     }
+    last_distance = dist_estimater_.Distance();//update last distance
+
     record_tmp_text_<<ts<<",";
     record_tmp_text_<<devid_<<",";
     record_tmp_text_<<dist_estimater_.Heading()<<",";
