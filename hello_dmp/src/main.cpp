@@ -13,8 +13,8 @@ extern "C" {
 #include "edison_i2c.h"
 #include "I2Cdev.h"
 
-//#include "MPU6050_6Axis_MotionApps20.h"
-#include "MPU6050_9Axis_MotionApps41.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+//#include "MPU6050_9Axis_MotionApps41.h"
 
 using namespace std;
 #define LINUX_GPIO_DEBUG_ROOT		"/sys/kernel/debug/gpio_debug/"
