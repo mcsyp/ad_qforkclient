@@ -22,7 +22,9 @@ bool SerialBle::Begin(const QString port_path)
 
   //search for target ports
   bool ret=false;
+  int index=0;
   foreach(QSerialPortInfo info, list){
+    qDebug()<<tr("serial port[%1]:%2").arg(index++).arg(info.portName());
     if(info.portName()==port_path){
       setPort(info);
       ret = true;
@@ -40,6 +42,7 @@ bool SerialBle::Begin(const QString port_path)
   if(open(QIODevice::ReadWrite)){
     return true;
   }
+  qDebug()<<tr("[%1,%2]Fail to open the %3").arg(__FILE__).arg(__LINE__).arg(port_path);
   return false;
 }
 

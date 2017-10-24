@@ -31,6 +31,7 @@ public:
 
   int Read();
   void Write(int value);
+  static bool FastWrite(int linux_gpio,int value);
 protected:
   void Reset();
 protected:

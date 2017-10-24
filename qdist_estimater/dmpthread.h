@@ -11,9 +11,6 @@ class DMPThread: public QThread
 {
   Q_OBJECT
 public:
-
-
-
   static constexpr int DEFAULT_UPDATE_TIMEOUT =5;
   static constexpr int DEFAULT_RECORD_SIZE=500;
   static constexpr int DEFAULT_MAX_TIMEGAP=50;

@@ -8,12 +8,16 @@
 #include "configparser.h"
 
 #include "serverprotocol.h"
+#include "i2creader.h"
 
 #define CONFIG_KEY_SERVER_ADDRESS            "server_address"
 #define CONFIG_KEY_SERVER_PORT               "server_port"
 #define CONFIG_KEY_SERVER_HB_TIMEOUT         "server_hb_timeout"
 
 #define CONFIG_KEY_DEVID                     "devid"
+
+#define ADS1000_DEV "/dev/i2c-0"
+#define ADS1000_ADDR 0x48
 
 class ClientSocketThread : public QTcpSocket
 {

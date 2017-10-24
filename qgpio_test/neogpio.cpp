@@ -54,6 +54,7 @@ bool NeoGpio::Begin(int linux_gpio, int direction){
     qDebug()<<tr("[%1,%2]executing: %3").arg(__FILE__).arg(__LINE__).arg(cmd_buffer);
   }while(0);
 
+#if 0
   //step3.set defuault value
   if(direction==DIRECTION_OUT){
     char cmd_buffer[80];
@@ -61,6 +62,7 @@ bool NeoGpio::Begin(int linux_gpio, int direction){
     system(cmd_buffer);
     qDebug()<<tr("[%1,%2]executing: %3").arg(__FILE__).arg(__LINE__).arg(cmd_buffer);
   };
+#endif
   //sleep 5 msec
   QThread::msleep(5);
 
@@ -94,4 +96,31 @@ void NeoGpio::Write(int value){
     else
       io_text_<<0<<endl;
   }
+}
+
+bool NeoGpio::FastWrite(int linux_gpio, int value)
+{
+  if(linux_gpio<0)return false;
+  //step1.export gpio file
+  do{
+    char cmd_buffer[80];
+    sprintf(cmd_buffer,CMD_GPIO_EXPORT,linux_gpio);
+    system(cmd_buffer);
+    qDebug()<<tr("[%1,%2]executing: %3").arg(__FILE__).arg(__LINE__).arg(cmd_buffer);
+  }while(0);
+
+  //step2.setting direction
+  do{
+    char cmd_buffer[80];
+    sprintf(cmd_buffer,CMD_GPIO_DIRECTION,"out",linux_gpio);
+    system(cmd_buffer);
+    qDebug()<<tr("[%1,%2]executing: %3").arg(__FILE__).arg(__LINE__).arg(cmd_buffer);
+  }while(0);
+
+  //step3.set defuault value
+  char cmd_buffer[80];
+  sprintf(cmd_buffer,CMD_GPIO_VALUE,value,linux_gpio);
+  system(cmd_buffer);
+  qDebug()<<tr("[%1,%2]executing: %3").arg(__FILE__).arg(__LINE__).arg(cmd_buffer);
+  return true;
 }

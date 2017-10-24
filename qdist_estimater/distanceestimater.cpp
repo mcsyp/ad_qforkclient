@@ -219,7 +219,7 @@ void DistanceEstimater::onFlowChanged(int ts, float dx, float dy)
   }
   if(abs(ts-gyro_mse_pass_ts_)>gyro_mse_timeout_ ||
      (!laser_distance_) ||
-     (fabs(dy)<this->flow_min_threshold_y_ && fabs(dx)<this->flow_min_threshold_y_)){
+     (fabs(dy)<this->flow_min_threshold_y_ && fabs(dx)<this->flow_min_threshold_x_)){
     //qDebug()<<tr("[%1,%2]gyro mse invalid. no pass").arg(__FILE__).arg(__LINE__);
     return;
   }

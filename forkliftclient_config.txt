@@ -30,19 +30,19 @@ laser_min_dist=0.002
 laser_max_dist=5.0
 
 ; server settings
-server_address=113.209.111.158
+server_address=101.124.1.81
 server_port=6061
 server_reconnect_timeout = 5000
 server_upload_timeout=60000
 server_hb_timeout=45000
 
 ; record settings
-record_temp=./record_temp.csv
-record_upload=./record_upload.csv
+record_temp=/home/pi/record_temp.csv
+record_upload=/home/pi/record_upload.csv
 record_timeout=1000
 
 ; slave ble mac
-slave_ble=3ca3080754f5
+slave_ble=508cb178276c
 
 ; device info
-devid = JDX301
+devid = JDX-01

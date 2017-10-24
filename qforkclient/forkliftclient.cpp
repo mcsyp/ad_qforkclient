@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QTime>
 #include <QFile>
+#include "neogpio.h"
 
 #include "serverprotocol.h"
 #include "servercmdid.h"
@@ -12,14 +13,13 @@ ForkliftClient::ForkliftClient(QObject *parent) : QObject(parent)
 {
   connect(&reconnect_timer_,SIGNAL(timeout()),&client_socket_,SLOT(onReconnectTimeout()));
   connect(this,SIGNAL(uploadRecordReady(QString)),&client_socket_,SLOT(onUploadTimeout(QString)));
+
   connect(&task_timer_,SIGNAL(timeout()),this,SLOT(onTaskTimeout()));
+  connect(&task_record_,SIGNAL(triggered(int)),this,SLOT(onTaskRecordTimeout(int)));
+  connect(&task_upload_,SIGNAL(triggered(int)),this,SLOT(onTaskUploadTimeout(int)));
 
   connect(&slave_ble_,SIGNAL(bleRxDataReady()),this,SLOT(onSlaveBleReady()));
   connect(&slave_ble_,SIGNAL(bleDisconnected()),this,SLOT(onSlaveBleDisconnected()));
-
-  //server time init
-  server_time_ = QDateTime::currentMSecsSinceEpoch()/1000;
-  local_time_offset_ = QTime::currentTime().msecsSinceStartOfDay()/1000;
 }
 ForkliftClient::~ForkliftClient(){
 }
@@ -53,10 +53,11 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
 
 
   do{//local settings
-    this->task_upload_timeout_ = SERVER_UPLOAD_TIMEOUT;
+    int task_upload_timeout = SERVER_UPLOAD_TIMEOUT;
     if(configs.contains(CONFIG_KEY_SERVER_UPLOAD_TIMEOUT)){
-      this->task_upload_timeout_ = configs[CONFIG_KEY_SERVER_UPLOAD_TIMEOUT].toInt();
+      task_upload_timeout = configs[CONFIG_KEY_SERVER_UPLOAD_TIMEOUT].toInt();
     }
+    task_upload_.Begin(task_upload_timeout);
 
     this->server_reconnect_timeout_ = SERVER_RECONNECTION_TIMEOUT;
     if(configs.contains(CONFIG_KEY_SERVER_RECONNECT_TIMEOUT)){
@@ -64,15 +65,16 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
     }
     qDebug()<<tr("[%1,%2]upload timeout:%3 ms,server reconnect timeout:%4")
               .arg(__FILE__).arg(__LINE__)
-              .arg(task_upload_timeout_)
+              .arg(task_upload_timeout)
               .arg(server_reconnect_timeout_);
   }while(0);
 
   do{//open record file
-    task_record_timeout_ = RECORD_TIMEOUT;
+    int task_record_timeout = RECORD_TIMEOUT;
     if(configs.contains(CONFIG_KEY_RECORD_TIMEOUT)){
-      task_record_timeout_ = configs[CONFIG_KEY_RECORD_TIMEOUT].toInt();
+      task_record_timeout = configs[CONFIG_KEY_RECORD_TIMEOUT].toInt();
     }
+    task_record_.Begin(task_record_timeout);
 
     //step1.upload path
     this->record_upload_path_ = "./record_upload.csv";
@@ -98,11 +100,10 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
               .arg(__FILE__).arg(__LINE__)
               .arg(record_tmp_path_)
               .arg(record_upload_path_)
-              .arg(task_record_timeout_);
+              .arg(task_record_timeout);
   }while(0);
 
 
-  //start distance thread
   if(!dist_estimater_.Begin(configs)){
     qDebug()<<tr("[%1,%2]Fail to start dsitance estimater.").arg(__FILE__).arg(__LINE__);
     return false;
@@ -126,66 +127,73 @@ bool ForkliftClient::Begin(ConfigParser::ConfigMap &configs){
 
 void ForkliftClient::onTaskTimeout()
 {
-  static float last_distance=0.0f;
   int ts = QTime::currentTime().msecsSinceStartOfDay();
+  task_record_.Trigger(ts);
+  task_upload_.Trigger(ts);
+}
 
-  //update record
-  if(abs(ts-this->task_record_ts_)>=task_record_timeout_){
-    this->task_record_ts_ = ts;
-    //TODO:record file
-    int local_time = QTime::currentTime().msecsSinceStartOfDay()/1000;
-    int ts = server_time_ +(local_time-local_time_offset_);
+void ForkliftClient::onTaskRecordTimeout(int ms)
+{
+  static float last_distance=0.0f;
+  (void)ms;
+  int local_time = QTime::currentTime().msecsSinceStartOfDay()/1000;
+  int ts = client_socket_.server_time_ +(local_time-client_socket_.local_time_offset_);
 
-    int moving_flag = 0;
-    if(fabs(dist_estimater_.Distance()-last_distance)>=this->move_state_threshold_){
-      moving_flag=1;
-    }
-    last_distance = dist_estimater_.Distance();//update last distance
-
-    record_tmp_text_<<ts<<",";
-    record_tmp_text_<<devid_<<",";
-    record_tmp_text_<<dist_estimater_.Heading()<<",";
-    record_tmp_text_<<dist_estimater_.Distance()<<",";
-    record_tmp_text_<<dist_estimater_.DistanceAbs()<<",";
-    record_tmp_text_<<moving_flag<<",";
-    record_tmp_text_<<ble_info_.ir_dist<<",";
-    record_tmp_text_<<ble_info_.laser_dist;
-    record_tmp_text_<<endl;
-    //qDebug()<<tr("[%1,%2]record updated").arg(__FILE__).arg(__LINE__);
+  int moving_flag = 0;
+  if(fabs(dist_estimater_.Distance()-last_distance)>=this->move_state_threshold_){
+    moving_flag=1;
   }
+  last_distance = dist_estimater_.Distance();//update last distance
+  record_tmp_text_<<ts<<",";
+  record_tmp_text_<<devid_<<",";
+  record_tmp_text_<<dist_estimater_.Heading()<<",";
+  record_tmp_text_<<dist_estimater_.Distance()<<",";
+  record_tmp_text_<<dist_estimater_.DistanceAbs()<<",";
+  record_tmp_text_<<moving_flag<<",";
+  record_tmp_text_<<ble_info_.ir_dist<<",";
+  record_tmp_text_<<ble_info_.laser_dist;
+  record_tmp_text_<<endl;
 
-  //upload file
-  if(abs(ts-this->task_upload_ts_)>=task_upload_timeout_){
-    this->task_upload_ts_ = ts;
-    record_tmp_text_.flush();
-    if(!record_tmp_file_.copy(this->record_upload_path_)){
-      //false means the file exists
-      QFile file(record_upload_path_);
-      if(!file.open(QIODevice::ReadWrite)){
-        QFile::remove(record_upload_path_);
-        qDebug()<<tr("[%1,%2]Fail to open the record file:%3").arg(__FILE__).arg(__LINE__).arg(record_upload_path_);
-        return;
-      }
-      //cat the tmp file to upload file
-      QTextStream stream(&file);
-      stream.seek(file.size());
-      record_tmp_text_.seek(0);
-      while(!record_tmp_text_.atEnd()){
-        stream<<record_tmp_text_.read(1024);
-      }
-      file.close();
-    }
-    record_tmp_file_.close();
-    record_tmp_file_.remove();
-    if(!record_tmp_file_.open(QIODevice::ReadWrite)){
-      qDebug()<<tr("[%1,%2]Fail to open the record file.").arg(__FILE__).arg(__LINE__);
+  qDebug()<<tr("[%1,%2]record ts:%3,server_ts:%4,local_ts:%5,local_offset:%6")
+            .arg(__FILE__).arg(__LINE__)
+            .arg(ts)
+            .arg(client_socket_.server_time_)
+            .arg(local_time)
+            .arg(client_socket_.local_time_offset_);
+}
+
+void ForkliftClient::onTaskUploadTimeout(int ms)
+{
+  (void)ms;
+  record_tmp_text_.flush();
+  if(!record_tmp_file_.copy(this->record_upload_path_)){
+    //false means the file exists
+    QFile file(record_upload_path_);
+    if(!file.open(QIODevice::ReadWrite)){
+      QFile::remove(record_upload_path_);
+      qDebug()<<tr("[%1,%2]Fail to open the record file:%3").arg(__FILE__).arg(__LINE__).arg(record_upload_path_);
       return;
     }
-    record_tmp_text_.setDevice(&record_tmp_file_);
+    //cat the tmp file to upload file
+    QTextStream stream(&file);
+    stream.seek(file.size());
     record_tmp_text_.seek(0);
-
-    emit uploadRecordReady(this->record_upload_path_);
+    while(!record_tmp_text_.atEnd()){
+      stream<<record_tmp_text_.read(1024);
+    }
+    file.close();
   }
+  record_tmp_file_.close();
+  record_tmp_file_.remove();
+  if(!record_tmp_file_.open(QIODevice::ReadWrite)){
+    qDebug()<<tr("[%1,%2]Fail to open the record file.").arg(__FILE__).arg(__LINE__);
+    return;
+  }
+  record_tmp_text_.setDevice(&record_tmp_file_);
+  record_tmp_text_.seek(0);
+
+  emit uploadRecordReady(this->record_upload_path_);
+  //qDebug()<<tr("[%1,%2]called here?").arg(__FILE__).arg(__LINE__);
 }
 
 

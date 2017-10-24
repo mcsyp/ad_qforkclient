@@ -13,6 +13,7 @@
 #include "distanceestimater.h"
 #include "serialble.h"
 #include "clientsocketthread.h"
+#include "mytask.h"
 
 #define CONFIG_KEY_SERVER_RECONNECT_TIMEOUT  "server_reconnect_timeout"
 #define CONFIG_KEY_SERVER_UPLOAD_TIMEOUT     "server_upload_timeout"
@@ -35,6 +36,9 @@ public:
   static constexpr int TASK_TIMEOUT=1000;//
   static constexpr int TASK_TRIGGER=200;//200ms
   static constexpr float MOVE_STATE_THRESHOLD=0.01;//1cm
+  static constexpr int GPIO_EN_PIX4=67;
+  static constexpr int GPIO_EN_LASER=66;
+  static constexpr int GPIO_BLE_STATE=65;
 
   explicit ForkliftClient(QObject *parent = nullptr);
   ~ForkliftClient();
@@ -45,17 +49,16 @@ signals:
   void uploadRecordReady(QString file_path);
 
 public slots:
-  void onTaskTimeout();
-
   void onSlaveBleReady();
   void onSlaveBleDisconnected();
+
+  void onTaskTimeout();
+  void onTaskRecordTimeout(int ms);
+  void onTaskUploadTimeout(int ms);
 public:
   /*device settings*/
   SerialBle slave_ble_;
   DistanceEstimater dist_estimater_;
-  //DistanceEstimater *ptr_dist_estimater_;
-  //QThread dist_thread_;
-  //DistanceThread dist_thread_;
 
 private:
   /*server settings*/
@@ -67,10 +70,6 @@ private:
   QString slave_mac_;
 
   server_protocol_cmd::ble_upload_t ble_info_;
-  //server time
-  qint64 server_time_;
-  qint64 local_time_offset_;
-
   //timers
   QTimer reconnect_timer_;
   QTimer task_timer_;
@@ -78,11 +77,15 @@ private:
   QFile record_tmp_file_;
   QTextStream record_tmp_text_;
   QString record_upload_path_;
+  /*
   int task_record_timeout_;
   int task_record_ts_;
 
   int task_upload_timeout_;//time to upload the data
   int task_upload_ts_;
+  */
+  MyTask task_record_;
+  MyTask task_upload_;
 
   float move_state_threshold_;
 };

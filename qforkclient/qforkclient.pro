@@ -26,7 +26,10 @@ SOURCES += main.cpp \
     ../qdist_estimater/MPU6050/MPU6050.cpp \
     ../qdist_estimater/I2Cdev/I2Cdev.cpp \
     serialble.cpp \
-    clientsocketthread.cpp
+    clientsocketthread.cpp \
+    ../qgpio_test/neogpio.cpp \
+    mytask.cpp \
+    i2creader.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -42,6 +45,7 @@ INCLUDEPATH += ../qdist_estimater/edison_i2c
 INCLUDEPATH += ../qdist_estimater/I2Cdev
 INCLUDEPATH += ../qdist_estimater/MPU6050
 INCLUDEPATH += ../qdist_estimater
+INCLUDEPATH += ../qgpio_test
 
 HEADERS += \
     serverprotocol.h \
@@ -183,4 +187,7 @@ HEADERS += \
     ../qdist_estimater/mavlink_flow_v1.0/protocol.h \
     ../qdist_estimater/I2Cdev/I2Cdev.h \
     serialble.h \
-    clientsocketthread.h
+    clientsocketthread.h \
+    ../qgpio_test/neogpio.h \
+    mytask.h \
+    i2creader.h

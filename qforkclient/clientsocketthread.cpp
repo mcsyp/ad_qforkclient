@@ -14,8 +14,8 @@ ClientSocketThread::ClientSocketThread(QObject *parent) : QTcpSocket(parent)
 
    moveToThread(&event_thread_);
 
-   this->server_time_ = 0;
-   this->local_time_offset_ = 0;
+   this->server_time_ = QTime::currentTime().msecsSinceStartOfDay()/1000;
+   this->local_time_offset_ = this->server_time_;
    this->volt_master_ = 0.0f;
    this->volt_slave_ = 0.0f;
 }
@@ -131,6 +131,28 @@ void ClientSocketThread::onReconnectTimeout()
       write((char*)head,head_len);
       //qDebug()<<tr("[%1,%2]HB updated").arg(__FILE__).arg(__LINE__);
     }while(0);
+
+
+    //step3. i2c_reader
+    I2CReader ads_reader_;
+    if(ads_reader_.Begin(ADS1000_DEV) && ads_reader_.SetSlave(ADS1000_ADDR)){
+      const int rd_size=3;
+      uint8_t rd_buffer[rd_size];
+      uint16_t volt_raw;
+
+      int len = ads_reader_.ReadBytes(rd_buffer,rd_size);
+      if(len<0)return;
+
+      //step1.convert raw.
+      uint8_t* ptr_data = (uint8_t*)&volt_raw;
+      ptr_data[1] = rd_buffer[0];
+      ptr_data[0] = rd_buffer[1];
+
+      //step2.convert to voltage:
+      float p_v = static_cast<float>(volt_raw)/2048.0f;
+      volt_master_ = p_v*6.6f;
+      printf("[%s,%d]p:%.2f, voltage:%.2f\n",__FILE__,__LINE__,p_v,volt_master_);
+    }
 
     //step2.update master volt
     if(volt_master_){
