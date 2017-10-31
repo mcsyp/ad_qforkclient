@@ -92,18 +92,18 @@ int main(int args,char *argv[])
   //set ble host mode
   const char * str_master = "AT+ROLE1\r\n";
   send_data(psttty->fd, str_master,strlen(str_master));
-  sleep(1);
+  sleep(3);
 
-  char str_slave[64];
-  printf("[%s,%d]connecting to %s\n",__FILE__,__LINE__,argv[3]);
-  sprintf(str_slave,"AT+CONA%s\r\n",argv[3]);
-  send_data(psttty->fd, str_slave,strlen(str_slave));
+  for(int i=0;i<10;++i){
+    char str_slave[64];
+    
+    memset(str_slave,0,64);
+    sprintf(str_slave,"AT+CONA%s\r\n",argv[3]);
+    send_data(psttty->fd, str_slave,strlen(str_slave));
+    printf("[%s,%d]command:[%s]\n",__FILE__,__LINE__,str_slave);
+    sleep(1);
+  }
   sleep(30);
-
-  const char* str_reset = "AT+RESET\r\n";
-  send_data(psttty->fd, str_reset,strlen(str_reset));
-  printf("[%s,%d]ble reset\n",__FILE__,__LINE__);
-  sleep(5);
 exit:
   if(psttty)free(psttty);
   return 0;
