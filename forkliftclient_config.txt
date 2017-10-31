@@ -7,7 +7,7 @@ dev_serial_ble = ttyUSB0
 lens_focal_len = 16
 
 ; timer settings in (ms)
-laser_update_timeout = 5000
+laser_update_timeout = 1200
 
 ; dmp settings
 dmp_update_timeout=5
